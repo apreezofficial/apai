@@ -21,6 +21,12 @@ const createChatLi = (message, className) => {
   return chatLi; // return chat <li> element
 }
 
+const isCreatorQuestion = (message) => {
+  // Check if the message contains keywords related to the creator
+  const keywords = ["who created", "who made", "creator", "who developed", "who built"];
+  return keywords.some(keyword => message.toLowerCase().includes(keyword));
+}
+
 const generateResponse = async (chatElement) => {
   const messageElement = chatElement.querySelector("p");
 
@@ -66,11 +72,18 @@ const handleChat = () => {
   chatbox.scrollTo(0, chatbox.scrollHeight);
 
   setTimeout(() => {
-    // Display "Thinking..." message while waiting for the response
-    const incomingChatLi = createChatLi("Thinking...", "incoming");
-    chatbox.appendChild(incomingChatLi);
-    chatbox.scrollTo(0, chatbox.scrollHeight);
-    generateResponse(incomingChatLi);
+    // Check if the user's message is about the creator
+    if (isCreatorQuestion(userMessage)) {
+      const creatorResponse = "Precious Adedokun, alias apcodesphere";
+      chatbox.appendChild(createChatLi(creatorResponse, "incoming"));
+      chatbox.scrollTo(0, chatbox.scrollHeight);
+    } else {
+      // Display "Thinking..." message while waiting for the response
+      const incomingChatLi = createChatLi("Thinking...", "incoming");
+      chatbox.appendChild(incomingChatLi);
+      chatbox.scrollTo(0, chatbox.scrollHeight);
+      generateResponse(incomingChatLi);
+    }
   }, 600);
 }
 
