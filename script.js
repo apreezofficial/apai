@@ -11,6 +11,9 @@ const inputInitHeight = chatInput.scrollHeight;
 const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU"; // Your API key here
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
+// Load conversation history from local storage
+let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")) || [];
+
 const createChatLi = (message, className) => {
   // Create a chat <li> element with passed message and className
   const chatLi = document.createElement("li");
@@ -34,15 +37,15 @@ const isWebsiteCreatorQuestion = (message) => {
 const generateResponse = async (chatElement) => {
   const messageElement = chatElement.querySelector("p");
 
+  // Add the user's message to the conversation history
+  conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
+
   // Define the properties and message for the API request
   const requestOptions = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{
-        role: "user",
-        parts: [{ text: userMessage }]
-      }]
+      contents: conversationHistory, // Send the entire conversation history
     }),
   }
 
@@ -53,7 +56,14 @@ const generateResponse = async (chatElement) => {
     if (!response.ok) throw new Error(data.error.message);
 
     // Get the API response text and update the message element
-    messageElement.textContent = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '$1');
+    const botMessage = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '$1');
+    messageElement.textContent = botMessage;
+
+    // Add the bot's response to the conversation history
+    conversationHistory.push({ role: "assistant", parts: [{ text: botMessage }] });
+
+    // Save the updated conversation history to local storage
+    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
   } catch (error) {
     // Handle error
     messageElement.classList.add("error");
@@ -81,6 +91,10 @@ const handleChat = () => {
       const creatorResponse = "This website was created by Precious Adedokun, also known as apcodesphere. He's a talented developer who built this platform!";
       chatbox.appendChild(createChatLi(creatorResponse, "incoming"));
       chatbox.scrollTo(0, chatbox.scrollHeight);
+
+      // Add the bot's response to the conversation history
+      conversationHistory.push({ role: "assistant", parts: [{ text: creatorResponse }] });
+      localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
     } else {
       // Display "Thinking..." message while waiting for the response
       const incomingChatLi = createChatLi("Thinking...", "incoming");
@@ -90,6 +104,15 @@ const handleChat = () => {
     }
   }, 600);
 }
+
+// Load conversation history when the page loads
+window.addEventListener("load", () => {
+  conversationHistory.forEach((message) => {
+    const className = message.role === "user" ? "outgoing" : "incoming";
+    chatbox.appendChild(createChatLi(message.parts[0].text, className));
+  });
+  chatbox.scrollTo(0, chatbox.scrollHeight);
+});
 
 chatInput.addEventListener("input", () => {
   // Adjust the height of the input textarea based on its content
