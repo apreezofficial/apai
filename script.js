@@ -21,10 +21,14 @@ const createChatLi = (message, className) => {
   return chatLi; // return chat <li> element
 }
 
-const isCreatorQuestion = (message) => {
-  // Check if the message contains keywords related to the creator
-  const keywords = ["who created", "who made", "creator", "who developed", "who built"];
-  return keywords.some(keyword => message.toLowerCase().includes(keyword));
+const isWebsiteCreatorQuestion = (message) => {
+  // Check if the message is specifically about the creator of this website
+  const websiteKeywords = ["this website", "this platform", "this project", "this site"];
+  const creatorKeywords = ["who created", "who made", "who developed", "who built", "who designed"];
+  
+  // Check if the message contains at least one website keyword AND one creator keyword
+  return websiteKeywords.some(websiteKeyword => message.toLowerCase().includes(websiteKeyword)) &&
+         creatorKeywords.some(creatorKeyword => message.toLowerCase().includes(creatorKeyword));
 }
 
 const generateResponse = async (chatElement) => {
@@ -42,7 +46,7 @@ const generateResponse = async (chatElement) => {
     }),
   }
 
-  // Send POST request to API, get response and set the reponse as paragraph text
+  // Send POST request to API, get response and set the response as paragraph text
   try {
     const response = await fetch(API_URL, requestOptions);
     const data = await response.json();
@@ -72,9 +76,9 @@ const handleChat = () => {
   chatbox.scrollTo(0, chatbox.scrollHeight);
 
   setTimeout(() => {
-    // Check if the user's message is about the creator
-    if (isCreatorQuestion(userMessage)) {
-      const creatorResponse = "Precious Adedokun, alias apcodesphere";
+    // Check if the user's message is specifically about the creator of this website
+    if (isWebsiteCreatorQuestion(userMessage)) {
+      const creatorResponse = "This website was created by Precious Adedokun, also known as apcodesphere. He's a talented developer who built this platform!";
       chatbox.appendChild(createChatLi(creatorResponse, "incoming"));
       chatbox.scrollTo(0, chatbox.scrollHeight);
     } else {
