@@ -192,3 +192,17 @@ header h2 {
     display: block;
   }
 }
+/* Style for the robot icon image */
+.robot-icon {
+  width: 24px; /* Adjust the size of the image */
+  height: 24px; /* Adjust the size of the image */
+  object-fit: contain; /* Ensure the image scales properly */
+  margin-right: 8px; /* Add spacing between the image and the text */
+  vertical-align: middle; /* Align the image vertically with the text */
+}
+
+/* Ensure the chat bubble aligns properly with the image */
+.chat.incoming {
+  display: flex;
+  align-items: center; /* Align the image and text vertically */
+}
