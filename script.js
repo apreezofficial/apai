@@ -3,6 +3,7 @@ const closeBtn = document.querySelector(".close-btn");
 const chatbox = document.querySelector(".chatbox");
 const chatInput = document.querySelector(".chat-input textarea");
 const sendChatBtn = document.querySelector(".chat-input span");
+const themeToggle = document.querySelector("#theme-toggle");
 
 let userMessage = null; // Variable to store user's message
 const inputInitHeight = chatInput.scrollHeight;
@@ -112,6 +113,12 @@ window.addEventListener("load", () => {
     chatbox.appendChild(createChatLi(message.parts[0].text, className));
   });
   chatbox.scrollTo(0, chatbox.scrollHeight);
+});
+
+// Theme Toggle
+themeToggle.addEventListener("change", () => {
+  document.body.classList.toggle("dark-mode");
+  document.body.classList.toggle("light-mode");
 });
 
 chatInput.addEventListener("input", () => {
