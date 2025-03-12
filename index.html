@@ -12,11 +12,15 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" />
     <script src="script.js" defer></script>
   </head>
-  <body>
+  <body class="light-mode">
     <button class="chatbot-toggler">
       <span class="material-symbols-rounded"><i class="ri-chat-3-line"></i></span>
       <span class="material-symbols-outlined"><i class="ri-close-line"></i></span>
     </button>
+    <div class="theme-switch">
+      <input type="checkbox" id="theme-toggle">
+      <label for="theme-toggle" class="theme-toggle-label"></label>
+    </div>
     <div class="chatbot">
       <header>
         <h2>AP-AI</h2>
@@ -24,7 +28,7 @@
       </header>
       <ul class="chatbox">
         <li class="chat incoming">
-        <img src="Screenshot_2025-03-12-09-37-35-88_e5d3893ac03954c6bb675ef2555b879b (1).jpg" class="robot-icon">
+          <img src="Screenshot_2025-03-12-09-37-35-88_e5d3893ac03954c6bb675ef2555b879b (1).jpg" class="robot-icon">
           <p>Hi there 👋<br>How can I help you today?</p>
         </li>
       </ul>
