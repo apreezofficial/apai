@@ -123,7 +123,7 @@ const generateAPIResponse = async (incomingMessageDiv) => {
 // Show a loading animation while waiting for the API response
 const showLoadingAnimation = () => {
     const html = `<div class="message-content">
-      <img class="avatar" src="./gemini.png" alt="Gemini avatar">
+      <img class="avatar" src="Gemini.png" alt="Gemini avatar">
       <p class="text"></p>
       <div class="loading-indicator">
         <div class="loading-bar"></div>
