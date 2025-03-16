@@ -56,33 +56,6 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
     }, 75);
 };
 
-// Function to detect and format tables in the response
-const formatTablesInResponse = (text) => {
-    // Regex to detect table-like structures (e.g., rows separated by newlines and columns by pipes)
-    const tableRegex = /(\|.+\|.+\|(\n|\r\n))+/g;
-    const tables = text.match(tableRegex);
-
-    if (tables) {
-        tables.forEach((table) => {
-            const rows = table.split("\n").filter((row) => row.trim() !== "");
-            // Check if the table has at least 2 rows (header + data)
-            if (rows.length >= 2) {
-                const tableHTML = `<table class="chat-table">
-                    ${rows
-                        .map((row, index) => {
-                            const cells = row.split("|").map((cell) => cell.trim());
-                            const tag = index === 0 ? "th" : "td"; // Use <th> for the first row
-                            return `<tr>${cells.map((cell) => `<${tag}>${cell}</${tag}>`).join("")}</tr>`;
-                        })
-                        .join("")}
-                </table>`;
-                text = text.replace(table, tableHTML); // Replace the table text with HTML
-            }
-        });
-    }
-    return text;
-};
-
 // Fetch response from the API based on user message
 const generateAPIResponse = async (incomingMessageDiv) => {
     const textElement = incomingMessageDiv.querySelector(".text"); // Getting text element
@@ -102,9 +75,6 @@ const generateAPIResponse = async (incomingMessageDiv) => {
 
         // Get the API response text and remove asterisks from it
         let apiResponse = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, "$1");
-
-        // Format tables in the response
-        apiResponse = formatTablesInResponse(apiResponse);
 
         // Add the AI's response to the conversation history
         conversationHistory.push({ role: "model", parts: [{ text: apiResponse }] });
