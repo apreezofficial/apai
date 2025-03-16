@@ -4,16 +4,20 @@ const suggestions = document.querySelectorAll(".suggestion");
 const toggleThemeButton = document.querySelector("#theme-toggle-button");
 const deleteChatButton = document.querySelector("#delete-chat-button");
 
-// Initialize Markdown-it
-const md = window.markdownit();
+// Load the Markdown library (marked.js)
+const markdownParser = window.marked || null; // Ensure marked.js is loaded
+
+if (!markdownParser) {
+    console.error("Markdown library (marked.js) not loaded!");
+}
 
 // State variables
 let userMessage = null;
 let isResponseGenerating = false;
-let conversationHistory = []; // Array to store conversation history
+let conversationHistory = [];
 
 // API configuration
-const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU"; 
+const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU"; // Replace with your actual API key
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 // Load theme and chat data from local storage on page load
@@ -29,7 +33,7 @@ const loadDataFromLocalstorage = () => {
     chatContainer.scrollTo(0, chatContainer.scrollHeight);
 };
 
-// Create a new message element
+// Create a new message element and return it
 const createMessageElement = (content, ...classes) => {
     const div = document.createElement("div");
     div.classList.add("message", ...classes);
@@ -37,10 +41,20 @@ const createMessageElement = (content, ...classes) => {
     return div;
 };
 
-// Show typing effect by displaying words one by one
+// Function to render Markdown properly
+const renderMarkdown = (text) => {
+    if (markdownParser) {
+        return markdownParser.parse(text); // Convert Markdown to HTML
+    }
+    return text; // Return raw text if marked.js is missing
+};
+
+// Show typing effect with Markdown rendering
 const showTypingEffect = (text, textElement, incomingMessageDiv) => {
-    const words = text.split(" ");
+    const formattedText = renderMarkdown(text); // Parse Markdown
+    const words = formattedText.split(" ");
     let currentWordIndex = 0;
+
     const typingInterval = setInterval(() => {
         textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
         incomingMessageDiv.querySelector(".icon").classList.add("hide");
@@ -55,7 +69,7 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
     }, 75);
 };
 
-// Fetch response from the API based on user message
+// Fetch API response and apply Markdown rendering
 const generateAPIResponse = async (incomingMessageDiv) => {
     const textElement = incomingMessageDiv.querySelector(".text");
     try {
@@ -72,9 +86,6 @@ const generateAPIResponse = async (incomingMessageDiv) => {
 
         let apiResponse = data.candidates[0].content.parts[0].text;
 
-        // Convert Markdown to HTML
-        apiResponse = md.render(apiResponse);
-
         conversationHistory.push({ role: "model", parts: [{ text: apiResponse }] });
 
         showTypingEffect(apiResponse, textElement, incomingMessageDiv);
@@ -87,7 +98,7 @@ const generateAPIResponse = async (incomingMessageDiv) => {
     }
 };
 
-// Show loading animation while waiting for the API response
+// Show loading animation before API response
 const showLoadingAnimation = () => {
     const html = `<div class="message-content">
       <img class="avatar" src="Gemini.png" alt="Gemini avatar">
@@ -99,13 +110,14 @@ const showLoadingAnimation = () => {
       </div>
     </div>
     <span onClick="copyMessage(this)" class="icon material-symbols-rounded">content_copy</span>`;
+    
     const incomingMessageDiv = createMessageElement(html, "incoming", "loading");
     chatContainer.appendChild(incomingMessageDiv);
     chatContainer.scrollTo(0, chatContainer.scrollHeight);
     generateAPIResponse(incomingMessageDiv);
 };
 
-// Copy message text to clipboard
+// Copy message to clipboard
 const copyMessage = (copyButton) => {
     const messageText = copyButton.parentElement.querySelector(".text").innerText;
     navigator.clipboard.writeText(messageText);
@@ -133,14 +145,14 @@ const handleOutgoingChat = () => {
     setTimeout(showLoadingAnimation, 500);
 };
 
-// Toggle between light and dark themes
+// Toggle theme
 toggleThemeButton.addEventListener("click", () => {
     const isLightMode = document.body.classList.toggle("light_mode");
     localStorage.setItem("themeColor", isLightMode ? "light_mode" : "dark_mode");
     toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
 });
 
-// Delete all chats from local storage
+// Delete all chats
 deleteChatButton.addEventListener("click", () => {
     if (confirm("Are you sure you want to delete all the chats?")) {
         localStorage.removeItem("saved-chats");
@@ -149,7 +161,7 @@ deleteChatButton.addEventListener("click", () => {
     }
 });
 
-// Handle click on suggestion
+// Handle suggestion clicks
 suggestions.forEach((suggestion) => {
     suggestion.addEventListener("click", () => {
         userMessage = suggestion.querySelector(".text").innerText;
@@ -157,10 +169,11 @@ suggestions.forEach((suggestion) => {
     });
 });
 
-// Prevent default form submission
+// Prevent form submission
 typingForm.addEventListener("submit", (e) => {
     e.preventDefault();
     handleOutgoingChat();
 });
 
+// Load saved data
 loadDataFromLocalstorage();
