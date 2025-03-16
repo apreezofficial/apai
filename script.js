@@ -1,34 +1,32 @@
+
 const typingForm = document.querySelector(".typing-form");
 const chatContainer = document.querySelector(".chat-list");
-const suggestions = document.querySelectorAll(".suggestion");
 const toggleThemeButton = document.querySelector("#theme-toggle-button");
 const deleteChatButton = document.querySelector("#delete-chat-button");
 
 // State variables
 let userMessage = null;
 let isResponseGenerating = false;
-let conversationHistory = []; // Array to store conversation history
+let conversationHistory = [];
 
-// API configuration
-const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU"; 
+// API Configuration
+const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+const md = window.markdownit(); // Markdown Parser
 
-// Load theme and chat data from local storage on page load
+// Load saved chats and theme from local storage
 const loadDataFromLocalstorage = () => {
     const savedChats = localStorage.getItem("saved-chats");
     const isLightMode = localStorage.getItem("themeColor") === "light_mode";
 
-    // Apply the stored theme
     document.body.classList.toggle("light_mode", isLightMode);
     toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
 
-    // Restore saved chats or clear the chat container
     chatContainer.innerHTML = savedChats || "";
-    document.body.classList.toggle("hide-header", savedChats);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
 };
 
-// Create a new message element and return it
+// Create and return a message element
 const createMessageElement = (content, ...classes) => {
     const div = document.createElement("div");
     div.classList.add("message", ...classes);
@@ -36,34 +34,28 @@ const createMessageElement = (content, ...classes) => {
     return div;
 };
 
-// Show typing effect by displaying words one by one
+// Show typing effect for bot response
 const showTypingEffect = (text, textElement, incomingMessageDiv) => {
     const words = text.split(" ");
     let currentWordIndex = 0;
     const typingInterval = setInterval(() => {
-        // Append each word to the text element with a space
         textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
-        incomingMessageDiv.querySelector(".icon").classList.add("hide");
-
-        // If all words are displayed
         if (currentWordIndex === words.length) {
             clearInterval(typingInterval);
             isResponseGenerating = false;
-            incomingMessageDiv.querySelector(".icon").classList.remove("hide");
-            localStorage.setItem("saved-chats", chatContainer.innerHTML); // Save chats to local storage
+            localStorage.setItem("saved-chats", chatContainer.innerHTML); // Save chats
         }
-        chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+        chatContainer.scrollTo(0, chatContainer.scrollHeight);
     }, 75);
 };
 
-// Fetch response from the API based on user message
+// Fetch AI response from Gemini API
 const generateAPIResponse = async (incomingMessageDiv) => {
-    const textElement = incomingMessageDiv.querySelector(".text"); // Getting text element
+    const textElement = incomingMessageDiv.querySelector(".text");
+
     try {
-        // Add the user's message to the conversation history
         conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
 
-        // Send a POST request to the API with the conversation history
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -73,24 +65,22 @@ const generateAPIResponse = async (incomingMessageDiv) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error.message);
 
-        // Get the API response text and remove asterisks from it
-        let apiResponse = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, "$1");
+        let apiResponse = data.candidates[0].content.parts[0].text;
+        apiResponse = md.render(apiResponse); // Render Markdown
 
-        // Add the AI's response to the conversation history
         conversationHistory.push({ role: "model", parts: [{ text: apiResponse }] });
 
-        showTypingEffect(apiResponse, textElement, incomingMessageDiv); // Show typing effect
+        showTypingEffect(apiResponse, textElement, incomingMessageDiv);
     } catch (error) {
-        // Handle error
         isResponseGenerating = false;
-        textElement.innerHTML = error.message;
-        textElement.parentElement.closest(".message").classList.add("error");
+        textElement.innerHTML = `❌ ${error.message}`;
+        incomingMessageDiv.classList.add("error");
     } finally {
         incomingMessageDiv.classList.remove("loading");
     }
 };
 
-// Show a loading animation while waiting for the API response
+// Show loading animation before API response
 const showLoadingAnimation = () => {
     const html = `<div class="message-content">
       <img class="avatar" src="Gemini.png" alt="Gemini avatar">
@@ -100,40 +90,43 @@ const showLoadingAnimation = () => {
         <div class="loading-bar"></div>
         <div class="loading-bar"></div>
       </div>
-    </div>
-    <span onClick="copyMessage(this)" class="icon material-symbols-rounded">content_copy</span>`;
+    </div>`;
+    
     const incomingMessageDiv = createMessageElement(html, "incoming", "loading");
     chatContainer.appendChild(incomingMessageDiv);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
+
     generateAPIResponse(incomingMessageDiv);
 };
 
-// Copy message text to the clipboard
+// Copy message to clipboard
 const copyMessage = (copyButton) => {
     const messageText = copyButton.parentElement.querySelector(".text").innerText;
     navigator.clipboard.writeText(messageText);
-    copyButton.innerText = "done"; // Show confirmation icon
-    setTimeout(() => (copyButton.innerText = "content_copy"), 1000); // Revert icon after 1 second
+    copyButton.innerText = "done";
+    setTimeout(() => (copyButton.innerText = "content_copy"), 1000);
 };
 
-// Handle sending outgoing chat messages
+// Handle sending user message
 const handleOutgoingChat = () => {
     userMessage = typingForm.querySelector(".typing-input").value.trim() || userMessage;
-    if (!userMessage || isResponseGenerating) return; // Exit if there is no message or response is generating
+    if (!userMessage || isResponseGenerating) return;
+    
     isResponseGenerating = true;
 
     const html = `<div class="message-content">
-      <img class="avatar" src="./user.png" alt="User avatar">
+      <img class="avatar" src="user.png" alt="User avatar">
       <p class="text"></p>
     </div>`;
+
     const outgoingMessageDiv = createMessageElement(html, "outgoing");
     outgoingMessageDiv.querySelector(".text").innerText = userMessage;
     chatContainer.appendChild(outgoingMessageDiv);
 
-    typingForm.reset(); // Clear input field
-    document.body.classList.add("hide-header");
-    chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
-    setTimeout(showLoadingAnimation, 500); // Show loading animation after a delay
+    typingForm.reset();
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
+
+    setTimeout(showLoadingAnimation, 500);
 };
 
 // Toggle between light and dark themes
@@ -143,27 +136,20 @@ toggleThemeButton.addEventListener("click", () => {
     toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
 });
 
-// Delete all chats from local storage when button is clicked
+// Delete all chats
 deleteChatButton.addEventListener("click", () => {
     if (confirm("Are you sure you want to delete all the chats?")) {
         localStorage.removeItem("saved-chats");
-        conversationHistory = []; // Clear conversation history
+        conversationHistory = [];
         loadDataFromLocalstorage();
     }
 });
 
-// Set userMessage and handle outgoing chat when a suggestion is clicked
-suggestions.forEach((suggestion) => {
-    suggestion.addEventListener("click", () => {
-        userMessage = suggestion.querySelector(".text").innerText;
-        handleOutgoingChat();
-    });
-});
-
-// Prevent default form submission and handle outgoing chat
+// Handle form submission
 typingForm.addEventListener("submit", (e) => {
     e.preventDefault();
     handleOutgoingChat();
 });
 
+// Load chat history on page load
 loadDataFromLocalstorage();
