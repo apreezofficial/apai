@@ -10,7 +10,7 @@ let isResponseGenerating = false;
 let conversationHistory = []; // Array to store conversation history
 
 // API configuration
-const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU"; 
+const API_KEY = "YOUR_REAL_API_KEY_HERE"; 
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 // Load theme and chat data from local storage on page load
@@ -41,29 +41,25 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
     const words = text.split(" ");
     let currentWordIndex = 0;
     const typingInterval = setInterval(() => {
-        // Append each word to the text element with a space
         textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
         incomingMessageDiv.querySelector(".icon").classList.add("hide");
 
-        // If all words are displayed
         if (currentWordIndex === words.length) {
             clearInterval(typingInterval);
             isResponseGenerating = false;
             incomingMessageDiv.querySelector(".icon").classList.remove("hide");
-            localStorage.setItem("saved-chats", chatContainer.innerHTML); // Save chats to local storage
+            localStorage.setItem("saved-chats", chatContainer.innerHTML);
         }
-        chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+        chatContainer.scrollTo(0, chatContainer.scrollHeight);
     }, 75);
 };
 
 // Fetch response from the API based on user message
 const generateAPIResponse = async (incomingMessageDiv) => {
-    const textElement = incomingMessageDiv.querySelector(".text"); // Getting text element
+    const textElement = incomingMessageDiv.querySelector(".text");
     try {
-        // Add the user's message to the conversation history
         conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
 
-        // Send a POST request to the API with the conversation history
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -73,18 +69,17 @@ const generateAPIResponse = async (incomingMessageDiv) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error.message);
 
-        // Get the API response text and process Markdown formatting
+        // Process the API response with markdown support
         let apiResponse = data.candidates[0].content.parts[0].text;
-        
-        // Convert Markdown to HTML using marked.js
-        apiResponse = marked.parse(apiResponse);
 
-        // Add the AI's response to the conversation history
+        if (typeof marked !== "undefined") {
+            apiResponse = marked.parse(apiResponse); // Convert markdown
+        }
+
         conversationHistory.push({ role: "model", parts: [{ text: apiResponse }] });
 
-        showTypingEffect(apiResponse, textElement, incomingMessageDiv); // Show typing effect
+        showTypingEffect(apiResponse, textElement, incomingMessageDiv);
     } catch (error) {
-        // Handle error
         isResponseGenerating = false;
         textElement.innerHTML = error.message;
         textElement.parentElement.closest(".message").classList.add("error");
@@ -107,7 +102,7 @@ const showLoadingAnimation = () => {
     <span onClick="copyMessage(this)" class="icon material-symbols-rounded">content_copy</span>`;
     const incomingMessageDiv = createMessageElement(html, "incoming", "loading");
     chatContainer.appendChild(incomingMessageDiv);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
     generateAPIResponse(incomingMessageDiv);
 };
 
@@ -115,14 +110,14 @@ const showLoadingAnimation = () => {
 const copyMessage = (copyButton) => {
     const messageText = copyButton.parentElement.querySelector(".text").innerText;
     navigator.clipboard.writeText(messageText);
-    copyButton.innerText = "done"; // Show confirmation icon
-    setTimeout(() => (copyButton.innerText = "content_copy"), 1000); // Revert icon after 1 second
+    copyButton.innerText = "done";
+    setTimeout(() => (copyButton.innerText = "content_copy"), 1000);
 };
 
 // Handle sending outgoing chat messages
 const handleOutgoingChat = () => {
     userMessage = typingForm.querySelector(".typing-input").value.trim() || userMessage;
-    if (!userMessage || isResponseGenerating) return; // Exit if there is no message or response is generating
+    if (!userMessage || isResponseGenerating) return;
     isResponseGenerating = true;
 
     const html = `<div class="message-content">
@@ -133,10 +128,10 @@ const handleOutgoingChat = () => {
     outgoingMessageDiv.querySelector(".text").innerText = userMessage;
     chatContainer.appendChild(outgoingMessageDiv);
 
-    typingForm.reset(); // Clear input field
+    typingForm.reset();
     document.body.classList.add("hide-header");
-    chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
-    setTimeout(showLoadingAnimation, 500); // Show loading animation after a delay
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
+    setTimeout(showLoadingAnimation, 500);
 };
 
 // Toggle between light and dark themes
@@ -150,12 +145,12 @@ toggleThemeButton.addEventListener("click", () => {
 deleteChatButton.addEventListener("click", () => {
     if (confirm("Are you sure you want to delete all the chats?")) {
         localStorage.removeItem("saved-chats");
-        conversationHistory = []; // Clear conversation history
+        conversationHistory = [];
         loadDataFromLocalstorage();
     }
 });
 
-// **Suggestion Click Feature (Fully Restored)**
+// Set userMessage and handle outgoing chat when a suggestion is clicked
 suggestions.forEach((suggestion) => {
     suggestion.addEventListener("click", () => {
         userMessage = suggestion.querySelector(".text").innerText;
