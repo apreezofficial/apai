@@ -4,6 +4,9 @@ const suggestions = document.querySelectorAll(".suggestion");
 const toggleThemeButton = document.querySelector("#theme-toggle-button");
 const deleteChatButton = document.querySelector("#delete-chat-button");
 
+// Initialize Markdown-it
+const md = window.markdownit();
+
 // State variables
 let userMessage = null;
 let isResponseGenerating = false;
@@ -18,17 +21,15 @@ const loadDataFromLocalstorage = () => {
     const savedChats = localStorage.getItem("saved-chats");
     const isLightMode = localStorage.getItem("themeColor") === "light_mode";
 
-    // Apply the stored theme
     document.body.classList.toggle("light_mode", isLightMode);
     toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
 
-    // Restore saved chats or clear the chat container
     chatContainer.innerHTML = savedChats || "";
     document.body.classList.toggle("hide-header", savedChats);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+    chatContainer.scrollTo(0, chatContainer.scrollHeight);
 };
 
-// Create a new message element and return it
+// Create a new message element
 const createMessageElement = (content, ...classes) => {
     const div = document.createElement("div");
     div.classList.add("message", ...classes);
@@ -69,12 +70,10 @@ const generateAPIResponse = async (incomingMessageDiv) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error.message);
 
-        // Process the API response with markdown support
         let apiResponse = data.candidates[0].content.parts[0].text;
 
-        if (typeof marked !== "undefined") {
-            apiResponse = marked.parse(apiResponse); // Convert markdown
-        }
+        // Convert Markdown to HTML
+        apiResponse = md.render(apiResponse);
 
         conversationHistory.push({ role: "model", parts: [{ text: apiResponse }] });
 
@@ -88,7 +87,7 @@ const generateAPIResponse = async (incomingMessageDiv) => {
     }
 };
 
-// Show a loading animation while waiting for the API response
+// Show loading animation while waiting for the API response
 const showLoadingAnimation = () => {
     const html = `<div class="message-content">
       <img class="avatar" src="Gemini.png" alt="Gemini avatar">
@@ -106,7 +105,7 @@ const showLoadingAnimation = () => {
     generateAPIResponse(incomingMessageDiv);
 };
 
-// Copy message text to the clipboard
+// Copy message text to clipboard
 const copyMessage = (copyButton) => {
     const messageText = copyButton.parentElement.querySelector(".text").innerText;
     navigator.clipboard.writeText(messageText);
@@ -141,7 +140,7 @@ toggleThemeButton.addEventListener("click", () => {
     toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
 });
 
-// Delete all chats from local storage when button is clicked
+// Delete all chats from local storage
 deleteChatButton.addEventListener("click", () => {
     if (confirm("Are you sure you want to delete all the chats?")) {
         localStorage.removeItem("saved-chats");
@@ -150,7 +149,7 @@ deleteChatButton.addEventListener("click", () => {
     }
 });
 
-// Set userMessage and handle outgoing chat when a suggestion is clicked
+// Handle click on suggestion
 suggestions.forEach((suggestion) => {
     suggestion.addEventListener("click", () => {
         userMessage = suggestion.querySelector(".text").innerText;
@@ -158,7 +157,7 @@ suggestions.forEach((suggestion) => {
     });
 });
 
-// Prevent default form submission and handle outgoing chat
+// Prevent default form submission
 typingForm.addEventListener("submit", (e) => {
     e.preventDefault();
     handleOutgoingChat();
