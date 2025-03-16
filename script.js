@@ -1,179 +1,39 @@
-const typingForm = document.querySelector(".typing-form");
-const chatContainer = document.querySelector(".chat-list");
-const suggestions = document.querySelectorAll(".suggestion");
-const toggleThemeButton = document.querySelector("#theme-toggle-button");
-const deleteChatButton = document.querySelector("#delete-chat-button");
+document.addEventListener("DOMContentLoaded", () => {
+    const downloadButton = document.createElement("button");
+    downloadButton.id = "download-chat-button";
+    downloadButton.innerText = "📥 Download Chats";
+    document.body.appendChild(downloadButton);
 
-// Load the Markdown library (marked.js)
-const markdownParser = window.marked || null; // Ensure marked.js is loaded
-
-if (!markdownParser) {
-    console.error("Markdown library (marked.js) not loaded!");
-}
-
-// State variables
-let userMessage = null;
-let isResponseGenerating = false;
-let conversationHistory = [];
-
-// API configuration
-const API_KEY = "AIzaSyDKWGk0HHs2CzHpzYtz-c38dE4HEzHE0MU"; // Replace with your actual API key
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-
-// Load theme and chat data from local storage on page load
-const loadDataFromLocalstorage = () => {
-    const savedChats = localStorage.getItem("saved-chats");
-    const isLightMode = localStorage.getItem("themeColor") === "light_mode";
-
-    document.body.classList.toggle("light_mode", isLightMode);
-    toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
-
-    chatContainer.innerHTML = savedChats || "";
-    document.body.classList.toggle("hide-header", savedChats);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight);
-};
-
-// Create a new message element and return it
-const createMessageElement = (content, ...classes) => {
-    const div = document.createElement("div");
-    div.classList.add("message", ...classes);
-    div.innerHTML = content;
-    return div;
-};
-
-// Function to render Markdown properly
-const renderMarkdown = (text) => {
-    if (markdownParser) {
-        return markdownParser.parse(text); // Convert Markdown to HTML
-    }
-    return text; // Return raw text if marked.js is missing
-};
-
-// Show typing effect with Markdown rendering
-const showTypingEffect = (text, textElement, incomingMessageDiv) => {
-    const formattedText = renderMarkdown(text); // Parse Markdown
-    const words = formattedText.split(" ");
-    let currentWordIndex = 0;
-
-    const typingInterval = setInterval(() => {
-        textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
-        incomingMessageDiv.querySelector(".icon").classList.add("hide");
-
-        if (currentWordIndex === words.length) {
-            clearInterval(typingInterval);
-            isResponseGenerating = false;
-            incomingMessageDiv.querySelector(".icon").classList.remove("hide");
-            localStorage.setItem("saved-chats", chatContainer.innerHTML);
+    downloadButton.addEventListener("click", () => {
+        const savedChats = localStorage.getItem("saved-chats");
+        if (!savedChats) {
+            alert("No chats found to download!");
+            return;
         }
-        chatContainer.scrollTo(0, chatContainer.scrollHeight);
-    }, 75);
-};
 
-// Fetch API response and apply Markdown rendering
-const generateAPIResponse = async (incomingMessageDiv) => {
-    const textElement = incomingMessageDiv.querySelector(".text");
-    try {
-        conversationHistory.push({ role: "user", parts: [{ text: userMessage }] });
+        // Convert HTML chat to plain text
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = savedChats;
+        const chatMessages = tempDiv.querySelectorAll(".message");
 
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: conversationHistory }),
+        let csvContent = "data:text/csv;charset=utf-8,Role,Message\n";
+
+        chatMessages.forEach(msg => {
+            const role = msg.classList.contains("incoming") ? "Bot" : "User";
+            const textElement = msg.querySelector(".text");
+            if (textElement) {
+                let message = textElement.innerText.replace(/"/g, '""'); // Escape quotes
+                csvContent += `"${role}","${message}"\n`;
+            }
         });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error.message);
-
-        let apiResponse = data.candidates[0].content.parts[0].text;
-
-        conversationHistory.push({ role: "model", parts: [{ text: apiResponse }] });
-
-        showTypingEffect(apiResponse, textElement, incomingMessageDiv);
-    } catch (error) {
-        isResponseGenerating = false;
-        textElement.innerHTML = error.message;
-        textElement.parentElement.closest(".message").classList.add("error");
-    } finally {
-        incomingMessageDiv.classList.remove("loading");
-    }
-};
-
-// Show loading animation before API response
-const showLoadingAnimation = () => {
-    const html = `<div class="message-content">
-      <img class="avatar" src="Gemini.png" alt="Gemini avatar">
-      <p class="text"></p>
-      <div class="loading-indicator">
-        <div class="loading-bar"></div>
-        <div class="loading-bar"></div>
-        <div class="loading-bar"></div>
-      </div>
-    </div>
-    <span onClick="copyMessage(this)" class="icon material-symbols-rounded">content_copy</span>`;
-    
-    const incomingMessageDiv = createMessageElement(html, "incoming", "loading");
-    chatContainer.appendChild(incomingMessageDiv);
-    chatContainer.scrollTo(0, chatContainer.scrollHeight);
-    generateAPIResponse(incomingMessageDiv);
-};
-
-// Copy message to clipboard
-const copyMessage = (copyButton) => {
-    const messageText = copyButton.parentElement.querySelector(".text").innerText;
-    navigator.clipboard.writeText(messageText);
-    copyButton.innerText = "done";
-    setTimeout(() => (copyButton.innerText = "content_copy"), 1000);
-};
-
-// Handle sending outgoing chat messages
-const handleOutgoingChat = () => {
-    userMessage = typingForm.querySelector(".typing-input").value.trim() || userMessage;
-    if (!userMessage || isResponseGenerating) return;
-    isResponseGenerating = true;
-
-    const html = `<div class="message-content">
-      <img class="avatar" src="./user.png" alt="User avatar">
-      <p class="text"></p>
-    </div>`;
-    const outgoingMessageDiv = createMessageElement(html, "outgoing");
-    outgoingMessageDiv.querySelector(".text").innerText = userMessage;
-    chatContainer.appendChild(outgoingMessageDiv);
-
-    typingForm.reset();
-    document.body.classList.add("hide-header");
-    chatContainer.scrollTo(0, chatContainer.scrollHeight);
-    setTimeout(showLoadingAnimation, 500);
-};
-
-// Toggle theme
-toggleThemeButton.addEventListener("click", () => {
-    const isLightMode = document.body.classList.toggle("light_mode");
-    localStorage.setItem("themeColor", isLightMode ? "light_mode" : "dark_mode");
-    toggleThemeButton.innerText = isLightMode ? "dark_mode" : "light_mode";
-});
-
-// Delete all chats
-deleteChatButton.addEventListener("click", () => {
-    if (confirm("Are you sure you want to delete all the chats?")) {
-        localStorage.removeItem("saved-chats");
-        conversationHistory = [];
-        loadDataFromLocalstorage();
-    }
-});
-
-// Handle suggestion clicks
-suggestions.forEach((suggestion) => {
-    suggestion.addEventListener("click", () => {
-        userMessage = suggestion.querySelector(".text").innerText;
-        handleOutgoingChat();
+        // Create and trigger a download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "chat_history.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     });
 });
-
-// Prevent form submission
-typingForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    handleOutgoingChat();
-});
-
-// Load saved data
-loadDataFromLocalstorage();
