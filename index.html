@@ -1,47 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APCodeSphere Chat</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
-</head>
-<body>
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8" />  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
+    <title>AP-AI Chatbot | The Optimal Way to Engage, Learn, and Innovate</title>  
 
-    <!-- Chat Container -->
-    <div class="chat-container">
-        <!-- Header -->
-        <header class="chat-header">
-            <h2>APCodeSphere</h2>
-            <div class="header-icons">
-                <span id="theme-toggle-button" class="material-symbols-rounded">light_mode</span>
-                <span id="delete-chat-button" class="material-symbols-rounded">delete</span>
-            </div>
-        </header>
+    <!-- Linking Google Fonts For Icons -->  
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />  
 
-        <!-- Chat List -->
-        <div class="chat-list">
-            <!-- Messages will be dynamically inserted here -->
-        </div>
+    <!-- Style CSS -->  
+    <link rel="stylesheet" href="style.css">  
 
-        <!-- Typing Area -->
-        <form class="typing-form">
-            <input type="text" class="typing-input" placeholder="Type a message..." autocomplete="off">
-            <button type="submit" class="send-button">
-                <span class="material-symbols-rounded">send</span>
-            </button>
-        </form>
+    <!-- PrismJS for Code Formatting -->  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>  
+</head>  
+<body>  
+    <marquee direction="" style="color: purple;">Site will be Closed by Monday, Due to restructuring. Contact <a href="https://apcodesphere.vercel.app">Apcodesphere </a>for more info</marquee>  
 
-        <!-- Suggested Messages -->
-        <div class="suggestions">
-            <div class="suggestion"><span class="text">What can you do?</span></div>
-            <div class="suggestion"><span class="text">Tell me a joke</span></div>
-            <div class="suggestion"><span class="text">What’s the weather like?</span></div>
-        </div>
-    </div>
+    <header class="header">  
+        <!-- Header Greetings -->  
+        <h1 class="title">Hello, there</h1>  
+        <p class="subtitle">How can I help you today?</p>  
 
-    <script src="script.js"></script>
-</body>
+        <!-- Suggestion list -->  
+        <ul class="suggestion-list">  
+            <li class="suggestion">  
+                <h4 class="text">What are the key differences between a democracy and a republic?</h4>  
+                <span class="icon material-symbols-rounded">draw</span>  
+            </li>  
+            <li class="suggestion">  
+                <h4 class="text">How do artificial intelligence and machine learning differ?</h4>  
+                <span class="icon material-symbols-rounded">lightbulb</span>  
+            </li>  
+            <li class="suggestion">  
+                <h4 class="text">How do you calculate probability in real-life situations, such as predicting weather conditions?</h4>  
+                <span class="icon material-symbols-rounded">explore</span>  
+            </li>  
+            <li class="suggestion">  
+                <h4 class="text">Can you walk me through how to build a basic CRUD application using JavaScript and PHP?</h4>  
+                <span class="icon material-symbols-rounded">code</span>  
+            </li>  
+        </ul>  
+    </header>  
+
+    <!-- Chat List / Container -->  
+    <div class="chat-list"></div>  
+
+    <!-- Typing Area -->  
+    <div class="typing-area">  
+        <form action="#" class="typing-form">  
+            <div class="input-wrapper">  
+                <input type="text" placeholder="Enter a prompt here" class="typing-input" required />  
+                <button id="send-message-button" class="icon material-symbols-rounded">send</button>  
+            </div>  
+            <div class="action-buttons">  
+                <span id="theme-toggle-button" class="icon material-symbols-rounded">light_mode</span>  
+                <span id="delete-chat-button" class="icon material-symbols-rounded">delete</span>  
+            </div>  
+        </form>  
+        <p class="disclaimer-text">  
+            AP-AI might generate incorrect information, including about individuals, so be sure to fact-check its responses.  
+        </p>  
+    </div>  
+
+    <!-- Script JS -->  
+    <script src="script.js"></script>  
+</body>  
 </html>
